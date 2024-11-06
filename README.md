@@ -42,10 +42,13 @@ curl -E ~/.ssl/cadcproxy.pem https://ws-uv.canfar.net/skaha/v0/session
 curl -E ~/.ssl/cadcproxy.pem https://ws-uv.canfar.net/skaha/v0/session/<sessionID>?view=logs
 ```
 
+Or you can use the Python client which makes everything a lot easier.
+
 Links:
 
 * Docs: https://www.opencadc.org/science-containers/complete/headless/
 * Science containers (SKAHA) https://www.opencadc.org/science-containers/
+* Python client https://shinybrar.github.io/skaha/session/
 * API reference https://ws-uv.canfar.net/skaha/
 
 ## Data access
