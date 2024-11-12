@@ -64,3 +64,9 @@ vcp file1.txt arc:projects/wallaby_test/file1.txt
 ```
 
 ## Execution
+
+You can use the web browser to view status and logs
+
+https://ws-uv.canfar.net/skaha/v0/session/
+https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=events
+https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=logs
