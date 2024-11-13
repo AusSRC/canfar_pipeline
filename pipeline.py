@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 
+import gc
 import vos
 import time
+import asyncio
+import nest_asyncio
 from prefect import task, flow, get_run_logger
 from skaha.images import Images
 from skaha.session import Session
 
 
+nest_asyncio.apply()
 RUNNING_STATES = ['Pending', 'Running', 'Terminating']
 COMPLETE_STATES = ['Failed', 'Succeeded']
+MIRIAD_IMAGE = "images.canfar.net/srcnet/miriad:dev"
+SOFIA_IMAGE = "images.canfar.net/srcnet/sofia2:v2.6.0"
 
 
 @task
@@ -25,18 +31,21 @@ def setup():
     return client, session
 
 @task
-def check_file_exists(client, path, filename):
+async def check_file_exists(client, path, filename):
     logger = get_run_logger()
     contents = client.listdir(path)
     assert filename in contents, 'File does not exist in the searched path.'
     logger.info(contents)
+    return
 
 
-def job(session, params, interval=1, *args, **kwargs):
+@task(task_run_name='{name}')
+async def job(name, session, params, interval=1, *args, **kwargs):
     """Job wrapper for CANFAR containers
 
     """
     logger = get_run_logger()
+    logger.info(name)
     completed = False
     session_id = session.create(**params)
     while not completed:
@@ -48,40 +57,41 @@ def job(session, params, interval=1, *args, **kwargs):
     return
 
 
-@task
-def s2p_setup():
-    logger = get_run_logger()
-    time.sleep(5)
-
-
-@task
-def sofia():
-    logger = get_run_logger()
-    time.sleep(2)
-
-
 @flow(name='skaha_pipeline')
-def pipeline():
+async def pipeline():
     path = 'arc:/projects/WALLABY_test'
     filename = 'POSSUM.mfs.band1.1029-55_1017-60_1058-60.11400.i.fits'
 
+    # setup
+    logger = get_run_logger()
     client, session = setup()
-    # check_file_exists(client, path, filename)
-    # s2p_setup()
-    # sofia()
 
+    # check file
+    await check_file_exists(client, path, filename)
+
+    # submit miraid job
     params = {
-        'name': "test",
-        'image': "images.canfar.net/srcnet/sofia2:v2.6.0",
-        'cores': 2,
-        'ram': 2,
-        'kind': "headless",
-        'cmd': "sleep",
-        'args': "5",
-        'env': {},
+        'name': "miriad", 'image': MIRIAD_IMAGE,
+        'cores': 2, 'ram': 4, 'kind': "headless",
+        'cmd': "sleep", 'args': "1", 'env': {}
     }
-    job(session, params)
+    await job(params['name'], session, params)
+    logger.info('Miriad job complete')
+
+    # submit parallel source finding jobs
+    params = [
+        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}},
+        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}},
+        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}}
+    ]
+    task_list = []
+    for i, param in enumerate(params):
+        name = f'{param["name"]}.{i}'
+        task = asyncio.create_task(job(name, session, param))
+        task_list.append(task)
+    logger.info(task_list)
+    await asyncio.gather(*task_list)
 
 
 if __name__ == '__main__':
-    pipeline()
+    asyncio.run(pipeline())
