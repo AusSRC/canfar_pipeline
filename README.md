@@ -37,6 +37,8 @@ Once all of this is set up, we can run the example pipeline with
 python3 pipeline.py
 ```
 
+You can then view the runs in the Prefect web portal http://127.0.0.1:4200
+
 ## Background
 
 Here is some background about CANFAR and the tools that may be required to get started using their platform, with links to key reference material. You need to sign up for a CADC account first and then run `pip install vos` in your preferred environment.
@@ -104,6 +106,6 @@ vcp file1.txt arc:projects/wallaby_test/file1.txt
 
 You can use the web browser to view status and logs
 
-https://ws-uv.canfar.net/skaha/v0/session/
-https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=events
-https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=logs
+- https://ws-uv.canfar.net/skaha/v0/session/
+- https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=events
+- https://ws-uv.canfar.net/skaha/v0/session/nrkhsmiq?view=logs

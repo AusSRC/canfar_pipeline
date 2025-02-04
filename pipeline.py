@@ -40,7 +40,7 @@ async def check_file_exists(client, path, filename):
 
 
 @task(task_run_name='{name}')
-async def job(name, session, params, interval=1, *args, **kwargs):
+async def job(name, session, params, interval=0.5, *args, **kwargs):
     """Job wrapper for CANFAR containers
 
     """
@@ -73,16 +73,15 @@ async def pipeline():
     params = {
         'name': "miriad", 'image': MIRIAD_IMAGE,
         'cores': 2, 'ram': 4, 'kind': "headless",
-        'cmd': "sleep", 'args': "1", 'env': {}
+        'cmd': "sleep", 'args': "0.5", 'env': {}
     }
     await job(params['name'], session, params)
     logger.info('Miriad job complete')
 
     # submit parallel source finding jobs
     params = [
-        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}},
-        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}},
-        {'name': "sofia", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "2", 'env': {}}
+        {'name': "sofia1", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "1", 'env': {}},
+        {'name': "sofia2", 'image': SOFIA_IMAGE, 'cores': 2, 'ram': 2, 'kind': "headless", 'cmd': "sleep", 'args': "1", 'env': {}}
     ]
     task_list = []
     for i, param in enumerate(params):
@@ -91,6 +90,15 @@ async def pipeline():
         task_list.append(task)
     logger.info(task_list)
     await asyncio.gather(*task_list)
+
+    # submit miraid job again after
+    params = {
+        'name': "miriad", 'image': MIRIAD_IMAGE,
+        'cores': 2, 'ram': 4, 'kind': "headless",
+        'cmd': "sleep", 'args': "1", 'env': {}
+    }
+    await job(params['name'], session, params)
+    logger.info('Miriad job complete')
 
 
 if __name__ == '__main__':
